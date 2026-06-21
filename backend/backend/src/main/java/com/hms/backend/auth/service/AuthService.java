@@ -1,10 +1,10 @@
-package com.hms.backend.service;
+package com.hms.backend.auth.service;
 
-import com.hms.backend.dto.LoginRequest;
-import com.hms.backend.dto.LoginResponse;
-import com.hms.backend.entity.User;
-import com.hms.backend.entity.UserRole;
-import com.hms.backend.repository.UserRepository;
+import com.hms.backend.auth.dto.LoginRequest;
+import com.hms.backend.auth.dto.LoginResponse;
+import com.hms.backend.auth.entity.User;
+import com.hms.backend.auth.entity.UserRole;
+import com.hms.backend.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

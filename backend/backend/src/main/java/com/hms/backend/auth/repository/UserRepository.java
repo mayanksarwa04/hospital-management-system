@@ -1,6 +1,6 @@
-package com.hms.backend.repository;
+package com.hms.backend.auth.repository;
 
-import com.hms.backend.entity.User;
+import com.hms.backend.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,8 +1,8 @@
-package com.hms.backend.controller;
+package com.hms.backend.auth.controller;
 
-import com.hms.backend.dto.LoginRequest;
-import com.hms.backend.dto.LoginResponse;
-import com.hms.backend.service.AuthService;
+import com.hms.backend.auth.dto.LoginRequest;
+import com.hms.backend.auth.dto.LoginResponse;
+import com.hms.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

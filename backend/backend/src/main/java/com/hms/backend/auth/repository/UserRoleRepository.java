@@ -1,6 +1,6 @@
-package com.hms.backend.repository;
+package com.hms.backend.auth.repository;
 
-import com.hms.backend.entity.UserRole;
+import com.hms.backend.auth.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {

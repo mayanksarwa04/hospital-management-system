@@ -1,4 +1,4 @@
-package com.hms.backend.dto;
+package com.hms.backend.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

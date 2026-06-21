@@ -1,4 +1,4 @@
-package com.hms.backend.controller;
+package com.hms.backend.auth.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
