@@ -1,17 +1,17 @@
 package com.hms.backend.config;
 
-import com.hms.backend.auth.entity.Role;
-import com.hms.backend.auth.entity.User;
-import com.hms.backend.auth.entity.UserRole;
-import com.hms.backend.auth.repository.RoleRepository;
-import com.hms.backend.auth.repository.UserRepository;
-import com.hms.backend.auth.repository.UserRoleRepository;
+import com.hms.backend.entity.Role;
+import com.hms.backend.entity.User;
+import com.hms.backend.entity.UserRole;
+import com.hms.backend.repository.RoleRepository;
+import com.hms.backend.repository.UserRepository;
+import com.hms.backend.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 

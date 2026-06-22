@@ -1,4 +1,4 @@
-package com.hms.backend.auth.entity;
+package com.hms.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

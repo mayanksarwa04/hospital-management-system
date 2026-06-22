@@ -1,6 +1,6 @@
-package com.hms.backend.auth.repository;
+package com.hms.backend.repository;
 
-import com.hms.backend.auth.entity.User;
+import com.hms.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -18,4 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByPhone(String phone);
+
+    boolean existsByEmailAndUserIdNot(String email, Long userId);
+
 }

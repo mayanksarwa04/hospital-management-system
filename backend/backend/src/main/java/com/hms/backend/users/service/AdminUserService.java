@@ -1,0 +1,272 @@
+package com.hms.backend.users.service;
+
+import com.hms.backend.users.dto.CreateUserRequest;
+import com.hms.backend.users.dto.RoleResponse;
+import com.hms.backend.users.dto.UserResponse;
+import com.hms.backend.entity.Role;
+import com.hms.backend.entity.User;
+import com.hms.backend.users.dto.*;
+import com.hms.backend.entity.UserRole;
+import com.hms.backend.repository.RoleRepository;
+import com.hms.backend.repository.UserRepository;
+import com.hms.backend.repository.UserRoleRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Comparator;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class AdminUserService {
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public List<RoleResponse> getAllRoles() {
+        return roleRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Role::getRoleName))
+                .map(this::mapToRoleResponse)
+                .toList();
+    }
+
+    @Transactional
+    public UserResponse createUser(CreateUserRequest request) {
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        Role role = roleRepository.findByRoleCode(request.getRoleCode())
+                .orElseThrow(() -> new RuntimeException("Invalid role: " + request.getRoleCode()));
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .active(true)
+                .accountLocked(false)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        UserRole userRole = UserRole.builder()
+                .user(savedUser)
+                .role(role)
+                .build();
+
+        userRoleRepository.save(userRole);
+
+        return mapToUserResponse(savedUser, role);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToUserResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return mapToUserResponse(user);
+    }
+
+    private UserResponse mapToUserResponse(User user) {
+
+        Role role = user.getUserRoles()
+                .stream()
+                .findFirst()
+                .map(UserRole::getRole)
+                .orElse(null);
+
+        return UserResponse.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .roleCode(role != null ? role.getRoleCode() : null)
+                .roleName(role != null ? role.getRoleName() : null)
+                .active(user.getActive())
+                .accountLocked(user.getAccountLocked())
+                .build();
+    }
+
+    private UserResponse mapToUserResponse(User user, Role role) {
+        return UserResponse.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .roleCode(role.getRoleCode())
+                .roleName(role.getRoleName())
+                .active(user.getActive())
+                .accountLocked(user.getAccountLocked())
+                .build();
+    }
+
+    private RoleResponse mapToRoleResponse(Role role) {
+        return RoleResponse.builder()
+                .roleId(role.getRoleId())
+                .roleCode(role.getRoleCode())
+                .roleName(role.getRoleName())
+                .description(role.getDescription())
+                .build();
+    }
+
+
+    @Transactional
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()
+                && userRepository.existsByEmailAndUserIdNot(request.getEmail(), userId)) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+
+        User savedUser = userRepository.save(user);
+
+        return mapToUserResponse(savedUser);
+    }
+
+    @Transactional
+    public UserResponse updateUserStatus(Long userId, UpdateUserStatusRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setActive(request.getActive());
+
+        User savedUser = userRepository.save(user);
+
+        return mapToUserResponse(savedUser);
+    }
+
+
+    @Transactional
+    public UserResponse updateUserLock(Long userId, UpdateUserLockRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setAccountLocked(request.getAccountLocked());
+
+        User savedUser = userRepository.save(user);
+
+        return mapToUserResponse(savedUser);
+    }
+
+
+    @Transactional
+    public UserResponse resetPassword(Long userId, ResetPasswordRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+
+        User savedUser = userRepository.save(user);
+
+        return mapToUserResponse(savedUser);
+    }
+
+
+    @Transactional
+    public UserResponse changeUserRole(Long userId, ChangeUserRoleRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Role newRole = roleRepository.findByRoleCode(request.getRoleCode())
+                .orElseThrow(() -> new RuntimeException("Invalid role: " + request.getRoleCode()));
+
+        userRoleRepository.deleteByUserUserId(userId);
+
+        UserRole userRole = UserRole.builder()
+                .user(user)
+                .role(newRole)
+                .build();
+
+        userRoleRepository.save(userRole);
+
+        return mapToUserResponse(user, newRole);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public AdminDashboardSummaryResponse getDashboardSummary() {
+
+        List<User> users = userRepository.findAll();
+
+        long totalUsers = users.size();
+
+        long activeUsers = users.stream()
+                .filter(user -> Boolean.TRUE.equals(user.getActive()))
+                .count();
+
+        long inactiveUsers = users.stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getActive()))
+                .count();
+
+        long lockedUsers = users.stream()
+                .filter(user -> Boolean.TRUE.equals(user.getAccountLocked()))
+                .count();
+
+        long totalAdmins = countUsersByRole(users, "ADMIN");
+        long totalDoctors = countUsersByRole(users, "DOCTOR");
+        long totalNurses = countUsersByRole(users, "NURSE");
+        long totalPharmacists = countUsersByRole(users, "PHARMACIST");
+        long totalPatients = countUsersByRole(users, "PATIENT");
+        long totalReceptionists = countUsersByRole(users, "RECEPTIONIST");
+
+        return AdminDashboardSummaryResponse.builder()
+                .totalUsers(totalUsers)
+                .activeUsers(activeUsers)
+                .inactiveUsers(inactiveUsers)
+                .lockedUsers(lockedUsers)
+                .totalAdmins(totalAdmins)
+                .totalDoctors(totalDoctors)
+                .totalNurses(totalNurses)
+                .totalPharmacists(totalPharmacists)
+                .totalPatients(totalPatients)
+                .totalReceptionists(totalReceptionists)
+                .build();
+    }
+
+
+    private long countUsersByRole(List<User> users, String roleCode) {
+        return users.stream()
+                .filter(user -> user.getUserRoles()
+                        .stream()
+                        .anyMatch(userRole -> userRole.getRole().getRoleCode().equals(roleCode)))
+                .count();
+    }
+
+
+}
