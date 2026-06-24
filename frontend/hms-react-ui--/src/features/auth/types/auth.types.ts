@@ -1,13 +1,3 @@
-// src/features/auth/types/auth.types.ts
-
-export type UserRole =
-  | "ADMIN"
-  | "DOCTOR"
-  | "NURSE"
-  | "PHARMACIST"
-  | "RECEPTIONIST"
-  | "PATIENT";
-
 export interface LoginRequest {
   username: string;
   password: string;
@@ -19,5 +9,5 @@ export interface LoginResponse {
   userId: number;
   username: string;
   fullName: string;
-  role: UserRole;
+  role: string;
 }
