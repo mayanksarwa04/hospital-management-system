@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMS Admin Dashboard & API Tester</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #eab308;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; color: #0f172a; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.85em; margin-bottom: 4px; color: #475569; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 9px 15px; border-radius: 4px; cursor: pointer; font-weight: 500; }
+        button:hover { opacity: 0.9; }
+        button.btn-danger { background: var(--danger); }
+        button.btn-success { background: var(--success); }
+        button.btn-warning { background: var(--warning); color: #0f172a; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; max-height: 350px; font-family: monospace; font-size: 0.85em; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: white; background: #64748b; }
+        .hidden { display: none; }
+        .flex-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Hospital Management System (HMS) — Live Dashboard</h1>
+        <p>Base Service URL: <span style="font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius:4px;">http://localhost:8080</span></p>
+    </header>
+
+    <div id="login-section" class="card" style="max-width: 400px; margin: 40px auto;">
+        <h3>🔐 Staff Login</h3>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="login-username" value="admin1">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-password" value="password123">
+        </div>
+        <button onclick="executeLogin()" style="width: 100%;">Authenticate Session</button>
+    </div>
+
+    <div id="main-application" class="grid hidden">
+
+        <div>
+            <div class="card">
+                <h3>👤 Current Session</h3>
+                <p><strong>User:</strong> <span id="sess-name">-</span> (<span id="sess-role">-</span>)</p>
+                <button class="btn-danger" onclick="logout()">Logout / Clear Session</button>
+            </div>
+
+            <div class="card">
+                <h3>📊 Metrics & Roles</h3>
+                <div class="flex-actions">
+                    <button class="btn-success" onclick="fetchSummary()">Get Metrics Summary</button>
+                    <button onclick="fetchRoles()">Fetch Allowed Roles</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📝 Add / Register User</h3>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="user-username" placeholder="doctor2">
+                </div>
+                <div class="form-group" id="pass-group">
+                    <label>Password</label>
+                    <input type="password" id="user-password" placeholder="doctor123">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="user-fullname" placeholder="Dr. Raj Malhotra">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="user-email" placeholder="doctor2@hms.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="user-phone" placeholder="9999999901">
+                </div>
+                <div class="form-group" id="role-group">
+                    <label>Role Authority Mapping</label>
+                    <select id="user-role">
+                        <option value="DOCTOR">DOCTOR</option>
+                        <option value="NURSE">NURSE</option>
+                        <option value="PHARMACIST">PHARMACIST</option>
+                        <option value="RECEPTIONIST">RECEPTIONIST</option>
+                        <option value="PATIENT">PATIENT</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+                <button class="btn-success" onclick="createUser()">Submit Creation API</button>
+            </div>
+
+            <div class="card">
+                <h3>⚙️ Targeted Target Operations (By User ID)</h3>
+                <div class="form-group">
+                    <label>Target User ID</label>
+                    <input type="number" id="target-id" placeholder="2">
+                </div>
+                <div class="flex-actions">
+                    <button onclick="fetchOneUser()">View Profile</button>
+                    <button class="btn-warning" onclick="updateUserBasic()">Update Profile Info</button>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+                <div class="flex-actions">
+                    <button class="btn-danger" onclick="toggleStatus(false)">Deactivate</button>
+                    <button class="btn-success" onclick="toggleStatus(true)">Activate</button>
+                    <button class="btn-danger" onclick="toggleLock(true)">Lock Account</button>
+                    <button class="btn-success" onclick="toggleLock(false)">Unlock Account</button>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+                <div class="form-group">
+                    <label>Administrative Value Overrides</label>
+                    <input type="text" id="target-value" placeholder="Enter New Password OR New Role Code">
+                </div>
+                <div class="flex-actions">
+                    <button class="btn-danger" onclick="resetPassword()">Force Password Override</button>
+                    <button class="btn-warning" onclick="changeRole()">Modify Assigned Role</button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <h3>👥 System Population Registry</h3>
+                <button onclick="fetchAllUsers()" style="margin-bottom: 15px;">Refresh All System Accounts</button>
+                <div id="users-directory"></div>
+            </div>
+
+            <div class="card">
+                <h3>📡 Real-time JSON Console Output</h3>
+                <p style="font-size:0.85em; color:#64748b; margin-top:-10px;">Captures live HTTP responses directly from your Spring Boot controllers.</p>
+                <pre id="json-console">{ "status": "Awaiting operations..." }</pre>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const BASE_URL = window.location.origin; // Dynamically binds to host address
+
+    function updateConsole(data) {
+        document.getElementById('json-console').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // --- 1. AUTH LOGIN API ---
+    async function executeLogin() {
+        const u = document.getElementById('login-username').value;
+        const p = document.getElementById('login-password').value;
+        try {
+            const res = await fetch(`${BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            updateConsole(data);
+
+            if(res.ok && data.success) {
+                document.getElementById('sess-name').innerText = data.fullName;
+                document.getElementById('sess-role').innerText = data.role;
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-application').classList.remove('hidden');
+                fetchAllUsers();
+            } else {
+                alert("Authentication Rejected: " + (data.message || "Invalid Credentials"));
+            }
+        } catch (err) {
+            alert("Connection error: Is Spring Boot running?");
+        }
+    }
+
+    function logout() {
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('main-application').classList.add('hidden');
+        updateConsole({ "status": "Logged out safely" });
+    }
+
+    // --- 2. ADMIN CARD METRICS & ROLES ---
+    async function fetchSummary() {
+        const res = await fetch(`${BASE_URL}/api/admin/dashboard/summary`);
+        const data = await res.json();
+        updateConsole(data);
+    }
+
+    async function fetchRoles() {
+        const res = await fetch(`${BASE_URL}/api/admin/roles`);
+        const data = await res.json();
+        updateConsole(data);
+    }
+
+    // --- 3. CORE USER CRUD TARGET HITTERS ---
+    async function fetchAllUsers() {
+        const res = await fetch(`${BASE_URL}/api/admin/users`);
+        const data = await res.json();
+        updateConsole(data);
+
+        let html = '';
+        if(Array.isArray(data)) {
+            data.forEach(user => {
+                html += `<div style="padding:10px; border-bottom:1px solid #e2e8f0; font-size:0.9em;">
+                    <strong>ID ${user.userId}:</strong> ${user.fullName} (${user.username}) -
+                    <span class="status-badge" style="background:#2563eb">${user.roleCode || 'NO_ROLE'}</span>
+                    Status: [Active: ${user.active}, Locked: ${user.accountLocked}]
+                </div>`;
+            });
+        }
+        document.getElementById('users-directory').innerHTML = html || 'No users records loaded.';
+    }
+
+    async function fetchOneUser() {
+        const id = document.getElementById('target-id').value;
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}`);
+        const data = await res.json();
+        updateConsole(data);
+    }
+
+    async function createUser() {
+        const body = {
+            username: document.getElementById('user-username').value,
+            password: document.getElementById('user-password').value,
+            fullName: document.getElementById('user-fullname').value,
+            email: document.getElementById('user-email').value,
+            phone: document.getElementById('user-phone').value,
+            roleCode: document.getElementById('user-role').value
+        };
+        const res = await fetch(`${BASE_URL}/api/admin/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        updateConsole(await res.json());
+        fetchAllUsers();
+    }
+
+    async function updateUserBasic() {
+        const id = document.getElementById('target-id').value;
+        const body = {
+            fullName: document.getElementById('user-fullname').value,
+            email: document.getElementById('user-email').value,
+            phone: document.getElementById('user-phone').value
+        };
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        updateConsole(await res.json());
+        fetchAllUsers();
+    }
+
+    // --- 4. INDIVIDUAL VALUE OVERRIDES (PATCH MAPPINGS) ---
+    async function toggleStatus(isActive) {
+        const id = document.getElementById('target-id').value;
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active: isActive })
+        });
+        updateConsole(await res.json());
+        fetchAllUsers();
+    }
+
+    async function toggleLock(isLocked) {
+        const id = document.getElementById('target-id').value;
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}/lock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountLocked: isLocked })
+        });
+        updateConsole(await res.json());
+        fetchAllUsers();
+    }
+
+    async function resetPassword() {
+        const id = document.getElementById('target-id').value;
+        const val = document.getElementById('target-value').value;
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}/reset-password`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newPassword: val })
+        });
+        updateConsole(await res.json());
+    }
+
+    async function changeRole() {
+        const id = document.getElementById('target-id').value;
+        const val = document.getElementById('target-value').value;
+        const res = await fetch(`${BASE_URL}/api/admin/users/${id}/role`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roleCode: val.toUpperCase() })
+        });
+        updateConsole(await res.json());
+        fetchAllUsers();
+    }
+</script>
+</body>
+</html>
